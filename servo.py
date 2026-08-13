@@ -65,6 +65,15 @@ def rotate(degrees: float, direction: str) -> float:
     return target
 
 
+def move_to(angle: float) -> float:
+    """Move to an absolute angle, clamped to [0, 180]. Returns new angle."""
+    target = max(0.0, min(180.0, float(angle)))
+    delta = target - _current_angle
+    if delta == 0:
+        return _current_angle
+    return rotate(abs(delta), "clockwise" if delta > 0 else "counterclockwise")
+
+
 def turn_clockwise_180() -> float:
     """Rotate the horn 180 deg clockwise (viewed from the horn side)."""
     return rotate(180, "clockwise")
