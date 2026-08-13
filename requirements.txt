@@ -1,3 +1,4 @@
 flask
 gpiozero
 pigpio
+w1thermsensor

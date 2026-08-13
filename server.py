@@ -4,8 +4,18 @@ from flask import Flask, jsonify, request
 
 import servo
 
+from w1thermsensor import W1ThermSensor
+
 app = Flask(__name__)
 _servo_lock = Lock()  # serialize hardware access across Flask worker threads
+
+sensor = W1ThermSensor()
+
+
+@app.get("/")
+def index():
+    temp = sensor.get_temperature()
+    return jsonify({"temp": temp})
 
 
 @app.get("/position")
