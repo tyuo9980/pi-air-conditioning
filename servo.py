@@ -24,7 +24,7 @@ def current_position() -> int | None:
 def move_to(angle: float) -> float:
     print("set: ", angle)
     servo.angle = angle
-    sleep(1.5)
+    sleep(1)
     print("actual: ", servo.angle)
     return servo.angle
 

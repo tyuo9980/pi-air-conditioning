@@ -1,4 +1,5 @@
-from threading import Lock
+import time
+from threading import Lock, Thread
 
 from flask import Flask, jsonify, render_template, request
 
@@ -20,15 +21,66 @@ SETTING_TO_ANGLE_MAP = {
 _target_temp = 22.0
 
 
+CYCLE_MODE = "LO_COOL"
+_cycle_on = False
+_cycle_minutes = 60.0
+_cycle_deadline = 0
+
+
+def set_mode(mode: str) -> None:
+    global _cur_mode
+    with _servo_lock:
+        servo.move_to(SETTING_TO_ANGLE_MAP[mode])
+        _cur_mode = mode
+
+
+def set_cycle(isOn: bool, minutes: int):
+    global _cycle_minutes, _cycle_deadline, _cycle_on
+
+    if not isOn:
+        _cycle_on = False
+        _cycle_deadline = 0
+        _cycle_minutes = 60
+        return
+    
+    set_mode(CYCLE_MODE)
+    _cycle_on = True
+    _cycle_minutes = minutes
+    _cycle_deadline = time.monotonic() + _cycle_minutes * 60
+
+
+def cycle_worker() -> None:
+    global _cur_mode, _cycle_deadline, _cycle_on
+    while True:
+        time.sleep(5)
+
+        remaining = _cycle_deadline - time.monotonic()
+        if remaining > 0:
+            continue
+
+        if _cycle_on:
+            with _servo_lock:
+                next_mode = "OFF" if _cur_mode == CYCLE_MODE else CYCLE_MODE
+                _cycle_deadline = time.monotonic() + _cycle_minutes * 60
+                servo.move_to(SETTING_TO_ANGLE_MAP[next_mode])
+                _cur_mode = next_mode
+
+
 def _state():
+    cycle = {
+        "on": _cycle_on,
+        "minutes": _cycle_minutes,
+        "next_switch_in": max(0, round(_cycle_deadline - time.monotonic())) if _cycle_on else None,
+    }
     state = {
         "temp": thermometer.get_temp(),
         "target": _target_temp,
         "position": servo.current_position(),
         "mode": _cur_mode,
+        "cycle": cycle,
     }
     print(state)
-    return state 
+    return state
 
 
 @app.get("/")
@@ -43,7 +95,7 @@ def get_state():
 
 @app.post("/state")
 def post_state():
-    global _cur_mode, _target_temp
+    global _target_temp
     body = request.get_json(silent=True) or {}
 
     print(body)
@@ -52,15 +104,23 @@ def post_state():
         target = float(body["target"])
         _target_temp = target
 
+    if "cycle" in body:
+        cycle = body["cycle"]
+        isOn = bool(cycle["on"])
+        minutes = float(cycle["minutes"])
+        set_cycle(isOn, minutes)
+
     if "mode" in body:
         mode = body["mode"]
-        with _servo_lock:
-            servo.move_to(SETTING_TO_ANGLE_MAP[mode])
-            _cur_mode = mode
+        if mode not in SETTING_TO_ANGLE_MAP:
+            return jsonify({"error": f"unknown mode {mode!r}"}), 400
+        set_cycle(False, 0)
+        set_mode(mode)
 
     return jsonify(_state())
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
     servo.move_to(SETTING_TO_ANGLE_MAP[_cur_mode])
+    Thread(target=cycle_worker, daemon=True).start()
+    app.run(host="0.0.0.0", port=5000)

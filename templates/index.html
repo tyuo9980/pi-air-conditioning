@@ -24,6 +24,25 @@
     <div class="scale"><span>16&deg;</span><span>30&deg;</span></div>
   </div>
 
+  <div class="card">
+    <div class="row">
+      <span class="label label-inline">Cycle cool / off</span>
+      <label class="switch">
+        <input type="checkbox" id="cycleOn" disabled>
+        <span class="track"></span>
+      </label>
+    </div>
+    <div class="row row-last">
+      <label class="label label-inline" for="cycleMinutes">Every</label>
+      <select id="cycleMinutes" class="minutes" disabled>
+        <option value="30">30 min</option>
+        <option value="60">1 hr</option>
+        <option value="120">2 hrs</option>
+      </select>
+    </div>
+    <div class="status" id="cycleStatus"></div>
+  </div>
+
   <div class="modes" id="modes" role="group" aria-label="Mode">
     <button type="button" data-mode="OFF" aria-pressed="false" disabled>Off</button>
     <button type="button" data-mode="EXH" aria-pressed="false" disabled>Exhaust</button>

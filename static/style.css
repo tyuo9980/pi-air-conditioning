@@ -98,6 +98,55 @@ input[type=range]:disabled::-moz-range-thumb { background: var(--off); }
   color: var(--muted);
   margin-top: 4px;
 }
+.row-last { margin-bottom: 0; }
+.switch { position: relative; display: inline-block; width: 48px; height: 28px; flex: none; }
+.switch input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.switch .track {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: var(--off);
+  transition: background .15s;
+  pointer-events: none;
+}
+.switch .track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--text);
+  transition: transform .15s;
+}
+.switch input:checked + .track { background: var(--accent); }
+.switch input:checked + .track::after { transform: translateX(20px); }
+.switch input:disabled { cursor: default; }
+.switch input:disabled + .track { opacity: .5; }
+.minutes {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 8px 34px 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg) no-repeat right 12px center;
+  /* chevron, inlined so the page stays request-free */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%238b98a5' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+  cursor: pointer;
+}
+.minutes:focus { outline: none; border-color: var(--accent); }
+.minutes:disabled { opacity: .5; cursor: default; }
 .modes {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
