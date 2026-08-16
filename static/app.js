@@ -10,6 +10,7 @@ const cycleOn = document.getElementById('cycleOn');
 const cycleOnMinutes = document.getElementById('cycleOnMinutes');
 const cycleOffMinutes = document.getElementById('cycleOffMinutes');
 const cycleSelects = [cycleOnMinutes, cycleOffMinutes];
+const cycleNow = document.getElementById('cycleNow');
 const cycleStatusEl = document.getElementById('cycleStatus');
 
 // Must stay in sync with the <option> values in index.html.
@@ -18,6 +19,15 @@ const CYCLE_MINUTES = ['1', '30', '60', '120'];
 let dragging = false;
 let sending = false;
 let pollController = null;
+let cycleRunning = false;  // "Cycle now" only means something while the cycle is on
+
+function setControlsDisabled(disabled) {
+  slider.disabled = disabled;
+  cycleOn.disabled = disabled;
+  for (const sel of cycleSelects) sel.disabled = disabled;
+  for (const btn of modeBtns) btn.disabled = disabled;
+  cycleNow.disabled = disabled || !cycleRunning;
+}
 
 function formatMinutes(m) {
   if (m < 60) return `${m} min`;
@@ -31,17 +41,15 @@ function render(s) {
     slider.value = s.target;
     targetLabel.textContent = Number(s.target).toFixed(1);
   }
-  slider.disabled = false;
 
   const mode = MODES.includes(s.mode) ? s.mode : null;
   for (const btn of modeBtns) {
-    btn.disabled = false;
     btn.setAttribute('aria-pressed', String(btn.dataset.mode === mode));
   }
 
   cycleOn.checked = s.cycle.on;
-  cycleOn.disabled = false;
-  for (const sel of cycleSelects) sel.disabled = false;
+  cycleRunning = s.cycle.on;
+  setControlsDisabled(false);
   // Ignore a server value that isn't one of the offered options rather than
   // letting the select silently blank itself.
   const onMinutes = String(s.cycle.on_minutes);
@@ -85,10 +93,7 @@ async function load() {
 async function send(patch) {
   sending = true;
   pollController?.abort();  // a poll already in flight would render pre-command state
-  slider.disabled = true;
-  cycleOn.disabled = true;
-  for (const sel of cycleSelects) sel.disabled = true;
-  for (const btn of modeBtns) btn.disabled = true;
+  setControlsDisabled(true);
   statusEl.textContent = 'Adjusting…';
   try {
     const r = await fetch('/state', {
@@ -100,10 +105,7 @@ async function send(patch) {
     render(await r.json());
   } catch (e) {
     statusEl.textContent = 'Command failed';
-    slider.disabled = false;
-    cycleOn.disabled = false;
-    for (const sel of cycleSelects) sel.disabled = false;
-    for (const btn of modeBtns) btn.disabled = false;
+    setControlsDisabled(false);
   } finally {
     sending = false;
   }
@@ -135,6 +137,7 @@ function sendCycle() {
 
 cycleOn.addEventListener('change', sendCycle);
 for (const sel of cycleSelects) sel.addEventListener('change', sendCycle);
+cycleNow.addEventListener('click', () => send({ cycle_now: true }));
 
 load();
 setInterval(load, 5000);

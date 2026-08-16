@@ -41,7 +41,8 @@ def _cycle_minutes_for(mode: str) -> float:
 
 def set_cycle(isOn: bool, on_minutes: float, off_minutes: float):
     global _cycle_on_minutes, _cycle_off_minutes, _cycle_deadline, _cycle_on
-
+    
+    prev_cycle_on = _cycle_on
     _cycle_on = isOn
     _cycle_on_minutes = on_minutes
     _cycle_off_minutes = off_minutes
@@ -50,12 +51,22 @@ def set_cycle(isOn: bool, on_minutes: float, off_minutes: float):
         _cycle_deadline = 0
         return
 
-    set_mode(CYCLE_MODE)
+    if not prev_cycle_on:
+        set_mode(CYCLE_MODE)
     _cycle_deadline = time.monotonic() + _cycle_minutes_for(CYCLE_MODE) * 60
 
 
+def advance_cycle() -> None:
+    """Flip to the other half of the cycle and restart that half's timer."""
+    global _cur_mode, _cycle_deadline
+    with _servo_lock:
+        next_mode = "OFF" if _cur_mode == CYCLE_MODE else CYCLE_MODE
+        _cycle_deadline = time.monotonic() + _cycle_minutes_for(next_mode) * 60
+        servo.move_to(SETTING_TO_ANGLE_MAP[next_mode])
+        _cur_mode = next_mode
+
+
 def cycle_worker() -> None:
-    global _cur_mode, _cycle_deadline, _cycle_on
     while True:
         time.sleep(5)
 
@@ -64,11 +75,7 @@ def cycle_worker() -> None:
             continue
 
         if _cycle_on:
-            with _servo_lock:
-                next_mode = "OFF" if _cur_mode == CYCLE_MODE else CYCLE_MODE
-                _cycle_deadline = time.monotonic() + _cycle_minutes_for(next_mode) * 60
-                servo.move_to(SETTING_TO_ANGLE_MAP[next_mode])
-                _cur_mode = next_mode
+            advance_cycle()
 
 
 def _state():
@@ -101,7 +108,7 @@ def get_state():
 
 @app.post("/state")
 def post_state():
-    global _target_temp
+    global _target_temp, CYCLE_MODE
     body = request.get_json(silent=True) or {}
 
     print(body)
@@ -117,11 +124,19 @@ def post_state():
         off_minutes = float(cycle["off_minutes"])
         set_cycle(isOn, on_minutes, off_minutes)
 
+    if body.get("cycle_now"):
+        if not _cycle_on:
+            return jsonify({"error": "cycle is not running"}), 400
+        advance_cycle()
+
     if "mode" in body:
         mode = body["mode"]
         if mode not in SETTING_TO_ANGLE_MAP:
             return jsonify({"error": f"unknown mode {mode!r}"}), 400
-        set_cycle(False, _cycle_on_minutes, _cycle_off_minutes)
+        if mode != "OFF":
+            CYCLE_MODE = mode
+        else:
+            set_cycle(False, _cycle_on_minutes, _cycle_off_minutes)
         set_mode(mode)
 
     return jsonify(_state())

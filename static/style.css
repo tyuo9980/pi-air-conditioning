@@ -147,6 +147,12 @@ input[type=range]:disabled::-moz-range-thumb { background: var(--off); }
 }
 .minutes:focus { outline: none; border-color: var(--accent); }
 .minutes:disabled { opacity: .5; cursor: default; }
+.cycle-now {
+  margin-top: 16px;
+  padding: 12px;
+  font-size: 16px;
+  background: var(--bg);
+}
 .modes {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
