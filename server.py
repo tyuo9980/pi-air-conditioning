@@ -57,7 +57,6 @@ def set_cycle(isOn: bool, on_minutes: float, off_minutes: float):
 
 
 def advance_cycle() -> None:
-    """Flip to the other half of the cycle and restart that half's timer."""
     global _cur_mode, _cycle_deadline
     with _servo_lock:
         next_mode = "OFF" if _cur_mode == CYCLE_MODE else CYCLE_MODE
@@ -84,6 +83,7 @@ def _state():
         "on_minutes": _cycle_on_minutes,
         "off_minutes": _cycle_off_minutes,
         "next_switch_in": max(0, round(_cycle_deadline - time.monotonic())) if _cycle_on else None,
+        "mode": CYCLE_MODE,
     }
     state = {
         "temp": thermometer.get_temp(),

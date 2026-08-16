@@ -26,19 +26,20 @@
 
   <div class="card">
     <div class="row">
-      <span class="label label-inline">Cycle cool / off</span>
+      <span class="label label-inline">Cycle</span>
       <label class="switch">
         <input type="checkbox" id="cycleOn" disabled>
         <span class="track"></span>
       </label>
     </div>
     <div class="row">
-      <label class="label label-inline" for="cycleOnMinutes">Cool for</label>
+      <label class="label label-inline" for="cycleOnMinutes">On for</label>
       <select id="cycleOnMinutes" class="minutes" disabled>
         <option value="1">1 min</option>
         <option value="30">30 min</option>
-        <option value="60">1 hr</option>
-        <option value="120">2 hrs</option>
+        <option value="60">60 min</option>
+        <option value="90">90 min</option>
+        <option value="120">120 min</option>
       </select>
     </div>
     <div class="row row-last">
@@ -46,8 +47,9 @@
       <select id="cycleOffMinutes" class="minutes" disabled>
         <option value="1">1 min</option>
         <option value="30">30 min</option>
-        <option value="60">1 hr</option>
-        <option value="120">2 hrs</option>
+        <option value="60">60 min</option>
+        <option value="90">90 min</option>
+        <option value="120">120 min</option>
       </select>
     </div>
     <button type="button" id="cycleNow" class="cycle-now" disabled>Cycle now</button>

@@ -60,7 +60,8 @@ function render(s) {
   if (!s.cycle.on) {
     cycleStatusEl.textContent = '';
   } else {
-    const next = mode === 'LO_COOL' ? 'Off' : 'Cool';
+    const cycleMode = s.cycle.mode;
+    const next = mode === cycleMode ? 'Off' : cycleMode;
     cycleStatusEl.textContent =
       `Switching to ${next} in ${formatMinutes(Math.ceil(s.cycle.next_switch_in / 60))}`;
   }
