@@ -59,3 +59,4 @@ def post_state():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+    servo.move_to(SETTING_TO_ANGLE_MAP[_cur_mode])
