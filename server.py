@@ -8,6 +8,7 @@ import thermometer
 app = Flask(__name__)
 _servo_lock = Lock()  # serialize hardware access across Flask worker threads
 
+_cur_mode = "OFF"
 
 SETTING_TO_ANGLE_MAP = {
     "OFF": 90,
@@ -16,14 +17,15 @@ SETTING_TO_ANGLE_MAP = {
     "LO_COOL": -90,
 }
 
-target_temp = 22.0
+_target_temp = 22.0
 
 
 def _state():
     return {
         "temp": thermometer.get_temp(),
-        "target": target_temp,
+        "target": _target_temp,
         "position": servo.current_position(),
+        "mode": _cur_mode,
     }
 
 
@@ -39,17 +41,18 @@ def get_state():
 
 @app.post("/state")
 def post_state():
-    global _target_temp
+    global _cur_mode, _target_temp
     body = request.get_json(silent=True) or {}
 
     if "target" in body:
         target = float(body["target"])
         _target_temp = target
 
-    if "fan" in body:
-        setting = body["fan"]
+    if "mode" in body:
+        mode = body["mode"]
         with _servo_lock:
-            servo.move_to(SETTING_TO_ANGLE_MAP[setting])
+            servo.move_to(SETTING_TO_ANGLE_MAP[mode])
+            _cur_mode = mode
 
     return jsonify(_state())
 

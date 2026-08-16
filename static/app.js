@@ -1,5 +1,5 @@
-// Mirrors SETTING_TO_ANGLE_MAP in server.py; /state reports the dial angle, not the setting.
-const FAN_ANGLES = {OFF: 90, EXH: 30, HEAT: -30, LO_COOL: -90};
+// The dial angles live in SETTING_TO_ANGLE_MAP in server.py; the UI only knows mode names.
+const MODES = ['OFF', 'EXH', 'HEAT', 'LO_COOL'];
 
 const tempEl = document.getElementById('temp');
 const slider = document.getElementById('slider');
@@ -10,13 +10,6 @@ const statusEl = document.getElementById('status');
 let dragging = false;
 let sending = false;
 
-function fanFromPosition(position) {
-  if (position === null || position === undefined) return null;
-  return Object.keys(FAN_ANGLES).find(
-    (fan) => Math.abs(FAN_ANGLES[fan] - position) < 5
-  ) ?? null;
-}
-
 function render(s) {
   tempEl.textContent = s.temp === null ? '--' : s.temp.toFixed(1);
   if (!dragging) {
@@ -25,18 +18,16 @@ function render(s) {
   }
   slider.disabled = false;
 
-  const fan = fanFromPosition(s.position);
+  const mode = MODES.includes(s.mode) ? s.mode : null;
   for (const btn of modeBtns) {
     btn.disabled = false;
-    btn.setAttribute('aria-pressed', String(btn.dataset.fan === fan));
+    btn.setAttribute('aria-pressed', String(btn.dataset.mode === mode));
   }
 
   if (s.position === null || s.position === undefined) {
     statusEl.textContent = 'Dial position unknown';
-  } else if (fan === 'OFF') {
-    statusEl.textContent = 'Idle';
   } else {
-    statusEl.textContent = 'Dial at ' + Number(s.position).toFixed(0) + '°';
+    statusEl.textContent = 'Dial at ' + s.position + '°';
   }
 }
 
@@ -59,7 +50,7 @@ async function send(patch) {
   try {
     const r = await fetch('/state', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
     });
     if (!r.ok) throw new Error(r.status);
@@ -80,11 +71,11 @@ slider.addEventListener('input', () => {
 });
 slider.addEventListener('change', () => {
   dragging = false;
-  send({target: Number(slider.value)});
+  send({ target: Number(slider.value) });
 });
 
 for (const btn of modeBtns) {
-  btn.addEventListener('click', () => send({fan: btn.dataset.fan}));
+  btn.addEventListener('click', () => send({ mode: btn.dataset.mode }));
 }
 
 load();

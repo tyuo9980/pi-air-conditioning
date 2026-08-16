@@ -14,8 +14,12 @@ servo = AngularServo(
     pin_factory=factory
 )
 
-def current_position() -> float:
-    return servo.angle
+def current_position() -> int | None:
+    # None until the servo has been driven to an angle; otherwise rounds to the nearest 10
+    angle = servo.angle
+    if angle is None:
+        return None
+    return int(round(angle, -1))
 
 def move_to(angle: float) -> float:
     print("set: ", angle)
