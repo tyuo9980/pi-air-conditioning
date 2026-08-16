@@ -7,7 +7,9 @@ const targetLabel = document.getElementById('targetLabel');
 const modeBtns = [...document.querySelectorAll('#modes button')];
 const statusEl = document.getElementById('status');
 const cycleOn = document.getElementById('cycleOn');
-const cycleMinutes = document.getElementById('cycleMinutes');
+const cycleOnMinutes = document.getElementById('cycleOnMinutes');
+const cycleOffMinutes = document.getElementById('cycleOffMinutes');
+const cycleSelects = [cycleOnMinutes, cycleOffMinutes];
 const cycleStatusEl = document.getElementById('cycleStatus');
 
 // Must stay in sync with the <option> values in index.html.
@@ -39,11 +41,13 @@ function render(s) {
 
   cycleOn.checked = s.cycle.on;
   cycleOn.disabled = false;
-  cycleMinutes.disabled = false;
+  for (const sel of cycleSelects) sel.disabled = false;
   // Ignore a server value that isn't one of the offered options rather than
   // letting the select silently blank itself.
-  const minutes = String(s.cycle.minutes);
-  if (CYCLE_MINUTES.includes(minutes)) cycleMinutes.value = minutes;
+  const onMinutes = String(s.cycle.on_minutes);
+  if (CYCLE_MINUTES.includes(onMinutes)) cycleOnMinutes.value = onMinutes;
+  const offMinutes = String(s.cycle.off_minutes);
+  if (CYCLE_MINUTES.includes(offMinutes)) cycleOffMinutes.value = offMinutes;
 
   if (!s.cycle.on) {
     cycleStatusEl.textContent = '';
@@ -83,7 +87,7 @@ async function send(patch) {
   pollController?.abort();  // a poll already in flight would render pre-command state
   slider.disabled = true;
   cycleOn.disabled = true;
-  cycleMinutes.disabled = true;
+  for (const sel of cycleSelects) sel.disabled = true;
   for (const btn of modeBtns) btn.disabled = true;
   statusEl.textContent = 'Adjusting…';
   try {
@@ -98,7 +102,7 @@ async function send(patch) {
     statusEl.textContent = 'Command failed';
     slider.disabled = false;
     cycleOn.disabled = false;
-    cycleMinutes.disabled = false;
+    for (const sel of cycleSelects) sel.disabled = false;
     for (const btn of modeBtns) btn.disabled = false;
   } finally {
     sending = false;
@@ -120,11 +124,17 @@ for (const btn of modeBtns) {
 }
 
 function sendCycle() {
-  send({ cycle: { on: cycleOn.checked, minutes: Number(cycleMinutes.value) } });
+  send({
+    cycle: {
+      on: cycleOn.checked,
+      on_minutes: Number(cycleOnMinutes.value),
+      off_minutes: Number(cycleOffMinutes.value),
+    },
+  });
 }
 
 cycleOn.addEventListener('change', sendCycle);
-cycleMinutes.addEventListener('change', sendCycle);
+for (const sel of cycleSelects) sel.addEventListener('change', sendCycle);
 
 load();
 setInterval(load, 5000);

@@ -23,7 +23,8 @@ _target_temp = 22.0
 
 CYCLE_MODE = "LO_COOL"
 _cycle_on = False
-_cycle_minutes = 60.0
+_cycle_on_minutes = 60.0
+_cycle_off_minutes = 60.0
 _cycle_deadline = 0
 
 
@@ -34,19 +35,25 @@ def set_mode(mode: str) -> None:
         _cur_mode = mode
 
 
-def set_cycle(isOn: bool, minutes: int):
-    global _cycle_minutes, _cycle_deadline, _cycle_on
+def _cycle_minutes_for(mode: str) -> float:
+    return _cycle_on_minutes if mode == CYCLE_MODE else _cycle_off_minutes
+
+
+def set_cycle(isOn: bool, on_minutes: float, off_minutes: float):
+    global _cycle_on_minutes, _cycle_off_minutes, _cycle_deadline, _cycle_on
 
     if not isOn:
         _cycle_on = False
         _cycle_deadline = 0
-        _cycle_minutes = 60
+        _cycle_on_minutes = 60
+        _cycle_off_minutes = 60
         return
-    
+
     set_mode(CYCLE_MODE)
     _cycle_on = True
-    _cycle_minutes = minutes
-    _cycle_deadline = time.monotonic() + _cycle_minutes * 60
+    _cycle_on_minutes = on_minutes
+    _cycle_off_minutes = off_minutes
+    _cycle_deadline = time.monotonic() + _cycle_minutes_for(CYCLE_MODE) * 60
 
 
 def cycle_worker() -> None:
@@ -61,7 +68,7 @@ def cycle_worker() -> None:
         if _cycle_on:
             with _servo_lock:
                 next_mode = "OFF" if _cur_mode == CYCLE_MODE else CYCLE_MODE
-                _cycle_deadline = time.monotonic() + _cycle_minutes * 60
+                _cycle_deadline = time.monotonic() + _cycle_minutes_for(next_mode) * 60
                 servo.move_to(SETTING_TO_ANGLE_MAP[next_mode])
                 _cur_mode = next_mode
 
@@ -69,7 +76,8 @@ def cycle_worker() -> None:
 def _state():
     cycle = {
         "on": _cycle_on,
-        "minutes": _cycle_minutes,
+        "on_minutes": _cycle_on_minutes,
+        "off_minutes": _cycle_off_minutes,
         "next_switch_in": max(0, round(_cycle_deadline - time.monotonic())) if _cycle_on else None,
     }
     state = {
@@ -107,14 +115,15 @@ def post_state():
     if "cycle" in body:
         cycle = body["cycle"]
         isOn = bool(cycle["on"])
-        minutes = float(cycle["minutes"])
-        set_cycle(isOn, minutes)
+        on_minutes = float(cycle["on_minutes"])
+        off_minutes = float(cycle["off_minutes"])
+        set_cycle(isOn, on_minutes, off_minutes)
 
     if "mode" in body:
         mode = body["mode"]
         if mode not in SETTING_TO_ANGLE_MAP:
             return jsonify({"error": f"unknown mode {mode!r}"}), 400
-        set_cycle(False, 0)
+        set_cycle(False, 0, 0)
         set_mode(mode)
 
     return jsonify(_state())
