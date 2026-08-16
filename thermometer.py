@@ -7,4 +7,4 @@ def get_temp():
 
 def probe_loop():
     while True:
-        return get_temp()
+        print(get_temp())
