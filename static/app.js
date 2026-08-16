@@ -1,31 +1,43 @@
+// Mirrors SETTING_TO_ANGLE_MAP in server.py; /state reports the dial angle, not the setting.
+const FAN_ANGLES = {OFF: 90, EXH: 30, HEAT: -30, LO_COOL: -90};
+
 const tempEl = document.getElementById('temp');
 const slider = document.getElementById('slider');
 const targetLabel = document.getElementById('targetLabel');
-const scaleMin = document.getElementById('scaleMin');
-const scaleMax = document.getElementById('scaleMax');
-const powerBtn = document.getElementById('power');
+const modeBtns = [...document.querySelectorAll('#modes button')];
 const statusEl = document.getElementById('status');
 
 let dragging = false;
 let sending = false;
 
+function fanFromPosition(position) {
+  if (position === null || position === undefined) return null;
+  return Object.keys(FAN_ANGLES).find(
+    (fan) => Math.abs(FAN_ANGLES[fan] - position) < 5
+  ) ?? null;
+}
+
 function render(s) {
   tempEl.textContent = s.temp === null ? '--' : s.temp.toFixed(1);
-  slider.min = s.min_temp;
-  slider.max = s.max_temp;
-  scaleMin.textContent = s.min_temp + '°';
-  scaleMax.textContent = s.max_temp + '°';
   if (!dragging) {
     slider.value = s.target;
     targetLabel.textContent = Number(s.target).toFixed(1);
   }
   slider.disabled = false;
-  powerBtn.disabled = false;
-  powerBtn.setAttribute('aria-pressed', String(s.power));
-  powerBtn.textContent = s.power ? 'On' : 'Off';
-  statusEl.textContent = s.power
-    ? 'Dial at ' + Number(s.position).toFixed(0) + '°'
-    : 'Idle';
+
+  const fan = fanFromPosition(s.position);
+  for (const btn of modeBtns) {
+    btn.disabled = false;
+    btn.setAttribute('aria-pressed', String(btn.dataset.fan === fan));
+  }
+
+  if (s.position === null || s.position === undefined) {
+    statusEl.textContent = 'Dial position unknown';
+  } else if (fan === 'OFF') {
+    statusEl.textContent = 'Idle';
+  } else {
+    statusEl.textContent = 'Dial at ' + Number(s.position).toFixed(0) + '°';
+  }
 }
 
 async function load() {
@@ -41,7 +53,8 @@ async function load() {
 
 async function send(patch) {
   sending = true;
-  slider.disabled = powerBtn.disabled = true;
+  slider.disabled = true;
+  for (const btn of modeBtns) btn.disabled = true;
   statusEl.textContent = 'Adjusting…';
   try {
     const r = await fetch('/state', {
@@ -53,7 +66,8 @@ async function send(patch) {
     render(await r.json());
   } catch (e) {
     statusEl.textContent = 'Command failed';
-    slider.disabled = powerBtn.disabled = false;
+    slider.disabled = false;
+    for (const btn of modeBtns) btn.disabled = false;
   } finally {
     sending = false;
   }
@@ -69,9 +83,9 @@ slider.addEventListener('change', () => {
   send({target: Number(slider.value)});
 });
 
-powerBtn.addEventListener('click', () => {
-  send({power: powerBtn.getAttribute('aria-pressed') !== 'true'});
-});
+for (const btn of modeBtns) {
+  btn.addEventListener('click', () => send({fan: btn.dataset.fan}));
+}
 
 load();
 setInterval(load, 5000);

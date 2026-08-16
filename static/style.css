@@ -98,6 +98,11 @@ input[type=range]:disabled::-moz-range-thumb { background: var(--off); }
   color: var(--muted);
   margin-top: 4px;
 }
+.modes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
 button {
   width: 100%;
   padding: 18px;
