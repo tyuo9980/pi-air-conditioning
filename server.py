@@ -21,12 +21,14 @@ _target_temp = 22.0
 
 
 def _state():
-    return {
+    state = {
         "temp": thermometer.get_temp(),
         "target": _target_temp,
         "position": servo.current_position(),
         "mode": _cur_mode,
     }
+    print(state)
+    return state 
 
 
 @app.get("/")
@@ -43,6 +45,8 @@ def get_state():
 def post_state():
     global _cur_mode, _target_temp
     body = request.get_json(silent=True) or {}
+
+    print(body)
 
     if "target" in body:
         target = float(body["target"])
