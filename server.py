@@ -123,7 +123,7 @@ def post_state():
         mode = body["mode"]
         if mode not in SETTING_TO_ANGLE_MAP:
             return jsonify({"error": f"unknown mode {mode!r}"}), 400
-        set_cycle(False, 0, 0)
+        set_cycle(False, _cycle_on_minutes, _cycle_off_minutes)
         set_mode(mode)
 
     return jsonify(_state())
