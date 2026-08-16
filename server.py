@@ -42,17 +42,15 @@ def _cycle_minutes_for(mode: str) -> float:
 def set_cycle(isOn: bool, on_minutes: float, off_minutes: float):
     global _cycle_on_minutes, _cycle_off_minutes, _cycle_deadline, _cycle_on
 
+    _cycle_on = isOn
+    _cycle_on_minutes = on_minutes
+    _cycle_off_minutes = off_minutes
+
     if not isOn:
-        _cycle_on = False
         _cycle_deadline = 0
-        _cycle_on_minutes = 60
-        _cycle_off_minutes = 60
         return
 
     set_mode(CYCLE_MODE)
-    _cycle_on = True
-    _cycle_on_minutes = on_minutes
-    _cycle_off_minutes = off_minutes
     _cycle_deadline = time.monotonic() + _cycle_minutes_for(CYCLE_MODE) * 60
 
 
