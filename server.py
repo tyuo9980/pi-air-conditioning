@@ -18,7 +18,7 @@ SETTING_TO_ANGLE_MAP = {
     "LO_COOL": -90,
 }
 
-_target_temp = 22.0
+_target_temp = 21.0
 
 
 CYCLE_MODE = "LO_COOL"
