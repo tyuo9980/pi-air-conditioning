@@ -19,12 +19,13 @@ SETTING_TO_ANGLE_MAP = {
 }
 
 _target_temp = 21.0
+_target_sway = 2.0
 
 
 CYCLE_MODE = "LO_COOL"
 _cycle_on = False
-_cycle_on_minutes = 60.0
-_cycle_off_minutes = 60.0
+_cycle_on_minutes = 15
+_cycle_off_minutes = 45
 _cycle_deadline = 0
 
 
