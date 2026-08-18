@@ -14,7 +14,7 @@ const cycleNow = document.getElementById('cycleNow');
 const cycleStatusEl = document.getElementById('cycleStatus');
 
 // Must stay in sync with the <option> values in index.html.
-const CYCLE_MINUTES = ['1', '30', '60', '120'];
+const CYCLE_MINUTES = ['1', '15', '30', '45', '60', '90', '120'];
 
 let dragging = false;
 let sending = false;
