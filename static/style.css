@@ -99,38 +99,6 @@ input[type=range]:disabled::-moz-range-thumb { background: var(--off); }
   margin-top: 4px;
 }
 .row-last { margin-bottom: 0; }
-.switch { position: relative; display: inline-block; width: 48px; height: 28px; flex: none; }
-.switch input {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-.switch .track {
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  background: var(--off);
-  transition: background .15s;
-  pointer-events: none;
-}
-.switch .track::after {
-  content: "";
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--text);
-  transition: transform .15s;
-}
-.switch input:checked + .track { background: var(--accent); }
-.switch input:checked + .track::after { transform: translateX(20px); }
-.switch input:disabled { cursor: default; }
-.switch input:disabled + .track { opacity: .5; }
 .minutes {
   -webkit-appearance: none;
   appearance: none;
@@ -153,11 +121,24 @@ input[type=range]:disabled::-moz-range-thumb { background: var(--off); }
   font-size: 16px;
   background: var(--bg);
 }
-.modes {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg);
 }
+.segmented button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 12px 4px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 16px;
+}
+.label-mode { margin-top: 20px; }
 button {
   width: 100%;
   padding: 18px;
@@ -184,3 +165,4 @@ button:disabled { opacity: .5; cursor: default; }
   min-height: 20px;
   margin-top: 12px;
 }
+[hidden] { display: none !important; }

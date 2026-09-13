@@ -1,17 +1,19 @@
-// The dial angles live in SETTING_TO_ANGLE_MAP in server.py; the UI only knows mode names.
-const MODES = ['OFF', 'EXH', 'HEAT', 'LO_COOL'];
+// The dial angles live in DIAL_TO_ANGLE_MAP in server.py; the UI only knows names.
+const SETTINGS = ['COOL', 'HEAT'];
+const MODES = ['OFF', 'CONSTANT', 'CYCLE', 'AUTO'];
 
 const tempEl = document.getElementById('temp');
 const slider = document.getElementById('slider');
 const targetLabel = document.getElementById('targetLabel');
-const modeBtns = [...document.querySelectorAll('#modes button')];
+const settingBtns = [...document.querySelectorAll('#setting button')];
+const modeBtns = [...document.querySelectorAll('#mode button')];
+const modeStatusEl = document.getElementById('modeStatus');
 const statusEl = document.getElementById('status');
-const cycleOn = document.getElementById('cycleOn');
+const cycleCard = document.getElementById('cycleCard');
 const cycleOnMinutes = document.getElementById('cycleOnMinutes');
 const cycleOffMinutes = document.getElementById('cycleOffMinutes');
 const cycleSelects = [cycleOnMinutes, cycleOffMinutes];
 const cycleNow = document.getElementById('cycleNow');
-const cycleStatusEl = document.getElementById('cycleStatus');
 
 // Must stay in sync with the <option> values in index.html.
 const CYCLE_MINUTES = ['1', '15', '30', '45', '60', '90', '120'];
@@ -19,20 +21,43 @@ const CYCLE_MINUTES = ['1', '15', '30', '45', '60', '90', '120'];
 let dragging = false;
 let sending = false;
 let pollController = null;
-let cycleRunning = false;  // "Cycle now" only means something while the cycle is on
 
 function setControlsDisabled(disabled) {
   slider.disabled = disabled;
-  cycleOn.disabled = disabled;
-  for (const sel of cycleSelects) sel.disabled = disabled;
+  for (const btn of settingBtns) btn.disabled = disabled;
   for (const btn of modeBtns) btn.disabled = disabled;
-  cycleNow.disabled = disabled || !cycleRunning;
+  for (const sel of cycleSelects) sel.disabled = disabled;
+  cycleNow.disabled = disabled;
 }
 
 function formatMinutes(m) {
   if (m < 60) return `${m} min`;
   const hrs = m / 60;
   return `${Number.isInteger(hrs) ? hrs : hrs.toFixed(1)} hr`;
+}
+
+const VERB = { COOL: 'Cooling', HEAT: 'Heating' };
+const NAME = { OFF: 'Off', COOL: 'Cool', HEAT: 'Heat' };
+
+function modeStatus(s) {
+  const setting = s.setting;
+  const on = s.dial === setting;
+  const target = Number(s.target);
+  switch (s.mode) {
+    case 'CONSTANT':
+      return `${VERB[setting]} constantly`;
+    case 'CYCLE': {
+      const next = on ? 'Off' : NAME[setting];
+      return `Switching to ${next} in ${formatMinutes(Math.ceil(s.cycle.next_switch_in / 60))}`;
+    }
+    case 'AUTO': {
+      if (!on) return `Waiting for ${target.toFixed(1)}°C`;
+      if (setting === 'COOL') return `Cooling until below ${(target - s.sway).toFixed(1)}°C`;
+      return `Heating until above ${(target + s.sway).toFixed(1)}°C`;
+    }
+    default:
+      return '';
+  }
 }
 
 function render(s) {
@@ -42,14 +67,17 @@ function render(s) {
     targetLabel.textContent = Number(s.target).toFixed(1);
   }
 
+  const setting = SETTINGS.includes(s.setting) ? s.setting : null;
+  for (const btn of settingBtns) {
+    btn.setAttribute('aria-pressed', String(btn.dataset.setting === setting));
+  }
   const mode = MODES.includes(s.mode) ? s.mode : null;
   for (const btn of modeBtns) {
     btn.setAttribute('aria-pressed', String(btn.dataset.mode === mode));
   }
+  modeStatusEl.textContent = modeStatus(s);
 
-  cycleOn.checked = s.cycle.on;
-  cycleRunning = s.cycle.on;
-  setControlsDisabled(false);
+  cycleCard.hidden = mode !== 'CYCLE';
   // Ignore a server value that isn't one of the offered options rather than
   // letting the select silently blank itself.
   const onMinutes = String(s.cycle.on_minutes);
@@ -57,19 +85,12 @@ function render(s) {
   const offMinutes = String(s.cycle.off_minutes);
   if (CYCLE_MINUTES.includes(offMinutes)) cycleOffMinutes.value = offMinutes;
 
-  if (!s.cycle.on) {
-    cycleStatusEl.textContent = '';
-  } else {
-    const cycleMode = s.cycle.mode;
-    const next = mode === cycleMode ? 'Off' : cycleMode;
-    cycleStatusEl.textContent =
-      `Switching to ${next} in ${formatMinutes(Math.ceil(s.cycle.next_switch_in / 60))}`;
-  }
+  setControlsDisabled(false);
 
   if (s.position === null || s.position === undefined) {
     statusEl.textContent = 'Dial position unknown';
   } else {
-    statusEl.textContent = 'Dial at ' + s.position + '°';
+    statusEl.textContent = `Dial at ${s.position}° (${NAME[s.dial] ?? s.dial})`;
   }
 }
 
@@ -122,22 +143,22 @@ slider.addEventListener('change', () => {
   send({ target: Number(slider.value) });
 });
 
+for (const btn of settingBtns) {
+  btn.addEventListener('click', () => send({ setting: btn.dataset.setting }));
+}
 for (const btn of modeBtns) {
   btn.addEventListener('click', () => send({ mode: btn.dataset.mode }));
 }
 
-function sendCycle() {
+function sendCycleMinutes() {
   send({
     cycle: {
-      on: cycleOn.checked,
       on_minutes: Number(cycleOnMinutes.value),
       off_minutes: Number(cycleOffMinutes.value),
     },
   });
 }
-
-cycleOn.addEventListener('change', sendCycle);
-for (const sel of cycleSelects) sel.addEventListener('change', sendCycle);
+for (const sel of cycleSelects) sel.addEventListener('change', sendCycleMinutes);
 cycleNow.addEventListener('click', () => send({ cycle_now: true }));
 
 load();

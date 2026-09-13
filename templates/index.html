@@ -25,13 +25,22 @@
   </div>
 
   <div class="card">
-    <div class="row">
-      <span class="label label-inline">Cycle</span>
-      <label class="switch">
-        <input type="checkbox" id="cycleOn" disabled>
-        <span class="track"></span>
-      </label>
+    <div class="label">Setting</div>
+    <div class="segmented" id="setting" role="group" aria-label="Setting">
+      <button type="button" data-setting="COOL" aria-pressed="false" disabled>Cool</button>
+      <button type="button" data-setting="HEAT" aria-pressed="false" disabled>Heat</button>
     </div>
+    <div class="label label-mode">Mode</div>
+    <div class="segmented" id="mode" role="group" aria-label="Mode">
+      <button type="button" data-mode="OFF" aria-pressed="false" disabled>Off</button>
+      <button type="button" data-mode="CONSTANT" aria-pressed="false" disabled>Constant</button>
+      <button type="button" data-mode="CYCLE" aria-pressed="false" disabled>Cycle</button>
+      <button type="button" data-mode="AUTO" aria-pressed="false" disabled>Auto</button>
+    </div>
+    <div class="status" id="modeStatus"></div>
+  </div>
+
+  <div class="card" id="cycleCard" hidden>
     <div class="row">
       <label class="label label-inline" for="cycleOnMinutes">On for</label>
       <select id="cycleOnMinutes" class="minutes" disabled>
@@ -57,15 +66,8 @@
       </select>
     </div>
     <button type="button" id="cycleNow" class="cycle-now" disabled>Cycle now</button>
-    <div class="status" id="cycleStatus"></div>
   </div>
 
-  <div class="modes" id="modes" role="group" aria-label="Mode">
-    <button type="button" data-mode="OFF" aria-pressed="false" disabled>Off</button>
-    <button type="button" data-mode="EXH" aria-pressed="false" disabled>Exhaust</button>
-    <button type="button" data-mode="HEAT" aria-pressed="false" disabled>Heat</button>
-    <button type="button" data-mode="LO_COOL" aria-pressed="false" disabled>Cool</button>
-  </div>
   <div class="status" id="status">Connecting&hellip;</div>
 </main>
 </body>
