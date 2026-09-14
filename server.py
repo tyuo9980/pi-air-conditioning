@@ -36,8 +36,8 @@ def decide_dial(mode, setting, dial, temp, target, sway, cycle_deadline, now):
     - OFF: dial at OFF.
     - CONSTANT: dial at the setting.
     - CYCLE: alternate setting and OFF; switch once `now` reaches `cycle_deadline`.
-    - AUTO: thermostat. COOL turns on at temp >= target and off below target - sway;
-      HEAT turns on at temp <= target and off above target + sway. A missing
+    - AUTO: thermostat. COOL turns on at temp >= target + sway and off at temp <= target - sway;
+      HEAT turns on at temp <= target - sway and off at temp >= target + sway. A missing
       reading (None) leaves the dial alone.
     In every mode a dial that is neither OFF nor the setting is corrected.
     """
@@ -61,11 +61,11 @@ def decide_dial(mode, setting, dial, temp, target, sway, cycle_deadline, now):
         if temp is None:
             return None
         if setting == "COOL":
-            want_on = temp >= target
-            want_off = temp < target - sway
+            want_on = temp >= target + sway
+            want_off = temp <= target - sway
         else:
-            want_on = temp <= target
-            want_off = temp > target + sway
+            want_on = temp <= target - sway
+            want_off = temp >= target + sway
         if want_on and dial != setting:
             return setting
         if want_off and dial != "OFF":
