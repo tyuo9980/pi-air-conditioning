@@ -51,9 +51,10 @@ function modeStatus(s) {
       return `Switching to ${next} in ${formatMinutes(Math.ceil(s.cycle.next_switch_in / 60))}`;
     }
     case 'AUTO': {
-      if (!on) return `Waiting for ${target.toFixed(1)}°C`;
-      if (setting === 'COOL') return `Cooling until below ${(target - s.sway).toFixed(1)}°C`;
-      return `Heating until above ${(target + s.sway).toFixed(1)}°C`;
+      const onAt = setting === 'COOL' ? target + s.sway : target - s.sway;
+      if (!on) return `Waiting for ${onAt.toFixed(1)}°C`;
+      if (setting === 'COOL') return `Cooling until ${(target - s.sway).toFixed(1)}°C`;
+      return `Heating until ${(target + s.sway).toFixed(1)}°C`;
     }
     default:
       return '';
